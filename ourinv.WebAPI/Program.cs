@@ -9,6 +9,7 @@ builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(op => op.UseInMemoryDatabase("teste"));
+
 var app = builder.Build();
 
 #region In Memory Database

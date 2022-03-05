@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32104.313
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ourinv.WebAPI", "ourinv.WebAPI\ourinv.WebAPI.csproj", "{727CD37B-BCD2-4190-9FBF-3E1B97C7530A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ourinv.WebAPI", "ourinv.WebAPI\ourinv.WebAPI.csproj", "{727CD37B-BCD2-4190-9FBF-3E1B97C7530A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xUnitTest", "xUnitTest\xUnitTest.csproj", "{3687EE79-E0EC-4906-92D3-A6DE5F536ECB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{727CD37B-BCD2-4190-9FBF-3E1B97C7530A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{727CD37B-BCD2-4190-9FBF-3E1B97C7530A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{727CD37B-BCD2-4190-9FBF-3E1B97C7530A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3687EE79-E0EC-4906-92D3-A6DE5F536ECB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3687EE79-E0EC-4906-92D3-A6DE5F536ECB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3687EE79-E0EC-4906-92D3-A6DE5F536ECB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3687EE79-E0EC-4906-92D3-A6DE5F536ECB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
