@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ourinv.WebAPI.Database;
 using ourinv.WebAPI.DTOs.CategoryDTO;
-using ourinv.WebAPI.DTOs.ProductDTO;
 using ourinv.WebAPI.Models;
 
 namespace ourinv.WebAPI.Controllers
@@ -38,18 +36,19 @@ namespace ourinv.WebAPI.Controllers
             _context.Categories.Add(newCategory);
             _context.SaveChanges();
 
-            return CreatedAtAction(nameof(GetCategory), new { categoryName = createCategoryDTO.CategoryName }, newCategory);
+            return CreatedAtAction(nameof(GetCategory), new { categoryName = createCategoryDTO.CategoryName }, convertToDTO(newCategory));
         }
 
         [HttpPut("{categoryName}")]
         public IActionResult UpdateCategory(string categoryName, [FromBody] UpdateCategoryDTO updateCategoryDTO)
         {
+            var categoryToBeUpdated = getCategoryByName(categoryName);
+
             if (_context.Categories.Any(x => x.Name == updateCategoryDTO.NewCategoryName))
             {
                 throw new Exception($"The category with name {updateCategoryDTO.NewCategoryName} already exists!");
             }
 
-            var categoryToBeUpdated = getCategoryByName(categoryName);
             categoryToBeUpdated.Name = updateCategoryDTO.NewCategoryName;
             _context.SaveChanges();
 
@@ -69,27 +68,15 @@ namespace ourinv.WebAPI.Controllers
 
         private BaseCategoryDTO convertToDTO(Category category)
         {
-            BaseCategoryDTO categoryDTO = new();
-            categoryDTO.Name = category.Name;
-
-            if (category.Products.Any())
+            return new()
             {
-                List<BaseProductDTO> formattedProducts = new();
-                foreach (var product in category.Products)
-                {
-                    formattedProducts.Add(new() { Name = product.Name, Quantity = product.Quantity });
-                }
-
-                categoryDTO.Products = formattedProducts;
-            }
-
-            return categoryDTO;
+                Name = category.Name,
+            };
         }
 
         private Category getCategoryByName(string categoryName)
         {
-            var existingCategory = _context.Categories.Include(x => x.Products).Where(x => x.Name == categoryName).SingleOrDefault();
-
+            var existingCategory = _context.Categories.Where(x => x.Name == categoryName).SingleOrDefault();
             if (existingCategory == null)
             {
                 throw new Exception($"The category with name {categoryName} doesn't exist!");

@@ -7,6 +7,6 @@ namespace ourinv.WebAPI.DTOs.CategoryDTO
     {
         public string Name { get; set; }
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public IEnumerable<BaseProductDTO>? Products { get; set; }
+        public IEnumerable<BaseProductDTO> Products { get; set; }
     }
 }
