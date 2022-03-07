@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using ourinv.WebAPI.Database;
 using ourinv.WebAPI.DTOs.CategoryDTO;
+using ourinv.WebAPI.DTOs.ProductDTO;
 using ourinv.WebAPI.Models;
 using ourinv.WebAPI.Services;
 using System;
@@ -17,6 +18,26 @@ namespace xUnitTest.ServiceTest
         public CategoryService_Test()
         {
             _categoryService = new(configContext());
+        }
+
+        [Fact]
+        public void GetCategory()
+        {
+            // Arrange
+            Category newCategory = new ()
+            {
+                Name = "Category 1"
+            };
+
+            using var context = configContext();
+            context.Categories.Add(newCategory);
+            context.SaveChanges();
+            _categoryService = new(context);
+
+            // Assert
+            BaseCategoryDTO result = _categoryService.GetCategory(newCategory.Name);
+            result.Name.Should().Be(newCategory.Name);
+            result.Products.Should().BeNull();
         }
 
         [Fact]
@@ -122,23 +143,91 @@ namespace xUnitTest.ServiceTest
             context.Categories.Add(newCategory);
             context.SaveChanges();
 
-            List<Product> products = new List<Product>()
+            List<Product> newProducts = new List<Product>()
             {
                 new Product() { Category = context.Categories.Find(1), Name = "Content 1" },
                 new Product() { Category = context.Categories.Find(1), Name = "Content 2" }
             };
-            context.Products.AddRange(products);
+            context.Products.AddRange(newProducts);
+            context.SaveChanges();
 
             _categoryService = new(context);
 
+            var expectedResult = new BaseCategoryDTO()
+            {
+                Name = newCategory.Name,
+                Products = new List<BaseProductDTO>
+                {
+                    new() { Name = newProducts[0].Name },
+                    new() { Name = newProducts[1].Name }
+                }
+            };
+
             // Act
-            var result = _categoryService.GetCategoryWithProductsByName(newCategory.Name);
+            var result = _categoryService.GetCategoryWithProducts(new() { Name = newCategory.Name });
 
             // Assert
             result.Name.Should().Be(newCategory.Name);
             result.Products.Should().HaveCount(2);
 
-            result.Products.Should().BeEquivalentTo(products);
+            result.Should().BeEquivalentTo(expectedResult);
+        }
+
+        [Fact]
+        public void GetCategoriesWithProducts()
+        {
+            // Arrange
+            var context = configContext();
+            List<Category> newCategories = new() 
+            { 
+                new() { Name = "Teste 1" },
+                new() { Name = "Teste 2" }
+            };
+            context.Categories.AddRange(newCategories);
+            context.SaveChanges();
+
+            List<Product> newProducts = new List<Product>()
+            {
+                new Product() { Category = context.Categories.Find(1), Name = "Content 1" },
+                new Product() { Category = context.Categories.Find(2), Name = "Content 2" }
+            };
+            context.Products.AddRange(newProducts);
+            context.SaveChanges();
+
+            _categoryService = new(context);
+
+            List<BaseCategoryDTO> expectedCategories = new()
+            {
+                new()
+                {
+                    Name = newCategories[0].Name,
+                    Products = new List<BaseProductDTO>()
+                    {
+                        new() { Name = newProducts[0].Name },
+                    }
+                },
+                new()
+                {
+                    Name = newCategories[1].Name,
+                    Products = new List<BaseProductDTO>()
+                    {
+                        new() { Name = newProducts[1].Name },
+                    }
+                },
+            };
+
+            // Act
+            var result = _categoryService.GetCategoriesWithProducts().ToList();
+
+            // Assert
+            result.Should().HaveCount(2);
+            result.Select(x => x.Products).Should().HaveCount(2);
+            result.Should().BeEquivalentTo(expectedCategories);
+            result.Should().AllSatisfy(x =>
+            {
+                x.Name.Should().NotBeNull();
+                x.Products.Should().HaveCount(1);
+            });
         }
 
         [Fact]

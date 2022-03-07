@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ourinv.WebAPI.Database;
 using ourinv.WebAPI.DTOs.CategoryDTO;
-using ourinv.WebAPI.Models;
+using ourinv.WebAPI.Services;
 
 namespace ourinv.WebAPI.Controllers
 {
@@ -10,79 +10,65 @@ namespace ourinv.WebAPI.Controllers
     public class CategoryController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly CategoryService _categoryService;
         public CategoryController(AppDbContext context)
         {
             _context = context;
+            _categoryService = new CategoryService(context);
         }
 
         [HttpGet("{categoryName}")]
         public IActionResult GetCategory(string categoryName)
         {
-            var existingCategory = getCategoryByName(categoryName);
+            var existingCategory = _categoryService.GetCategory(categoryName);
 
-            return Ok(convertToDTO(existingCategory));
+            return Ok(existingCategory);
         }
 
         [HttpPost]
         public IActionResult CreateCategory(CreateCategoryDTO createCategoryDTO)
         {
-            if (_context.Categories.Any(x => x.Name == createCategoryDTO.CategoryName))
-            {
-                throw new Exception($"The category with name {createCategoryDTO.CategoryName} already exists!");
-            }
+            var newCategory = _categoryService.CreateCategory(createCategoryDTO);
 
-            Category newCategory = new() { Id = _context.Categories.Max(x => x.Id) + 1, Name = createCategoryDTO.CategoryName };
-
-            _context.Categories.Add(newCategory);
-            _context.SaveChanges();
-
-            return CreatedAtAction(nameof(GetCategory), new { categoryName = createCategoryDTO.CategoryName }, convertToDTO(newCategory));
+            return CreatedAtAction(nameof(GetCategory), new { categoryName = createCategoryDTO.CategoryName }, newCategory);
         }
 
         [HttpPut("{categoryName}")]
         public IActionResult UpdateCategory(string categoryName, [FromBody] UpdateCategoryDTO updateCategoryDTO)
         {
-            var categoryToBeUpdated = getCategoryByName(categoryName);
+            var categoryUpdated = _categoryService.UpdateCategory(new() { CategoryName = categoryName }, updateCategoryDTO);
 
-            if (_context.Categories.Any(x => x.Name == updateCategoryDTO.NewCategoryName))
-            {
-                throw new Exception($"The category with name {updateCategoryDTO.NewCategoryName} already exists!");
-            }
-
-            categoryToBeUpdated.Name = updateCategoryDTO.NewCategoryName;
-            _context.SaveChanges();
-
-            return Ok(convertToDTO(categoryToBeUpdated));
+            return Ok(categoryUpdated);
         }
 
         [HttpDelete("{categoryName}")]
         public IActionResult DeleteCategory(string categoryName)
         {
-            var categoryToBeDeleted = getCategoryByName(categoryName);
+            var categoryToBeDeleted = _categoryService.DeleteCategory(new()
+            {
+                Name = categoryName
+            });
 
-            _context.Categories.Remove(categoryToBeDeleted);
-            _context.SaveChanges();
-
-            return Ok(convertToDTO(categoryToBeDeleted));
+            return Ok(categoryToBeDeleted);
         }
 
-        private BaseCategoryDTO convertToDTO(Category category)
+        [HttpGet("{categoryName}/product")]
+        public IActionResult GetCategoryWithProduct(string categoryName)
         {
-            return new()
+            var existingCategory = _categoryService.GetCategoryWithProducts(new()
             {
-                Name = category.Name,
-            };
+                Name = categoryName
+            });
+
+            return Ok(existingCategory);
         }
 
-        private Category getCategoryByName(string categoryName)
+        [HttpGet("product")]
+        public IActionResult GetCategoriesWithProducts()
         {
-            var existingCategory = _context.Categories.Where(x => x.Name == categoryName).SingleOrDefault();
-            if (existingCategory == null)
-            {
-                throw new Exception($"The category with name {categoryName} doesn't exist!");
-            }
+            var existingCategories = _categoryService.GetCategoriesWithProducts();
 
-            return existingCategory;
+            return Ok(existingCategories);
         }
     }
 }

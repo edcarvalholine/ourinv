@@ -14,9 +14,29 @@ namespace ourinv.WebAPI.Services
             _context = context;
         }
 
-        public IEnumerable<Category> GetAllCategories()
+        public BaseCategoryDTO GetCategory(string categoryName)
         {
-            return _context.Categories;
+            var category = GetCategoryByName(categoryName);
+
+            return new()
+            {
+                Name = category.Name,
+            };
+        }
+
+        public IEnumerable<BaseCategoryDTO> GetAllCategories()
+        {
+            var categories = _context.Categories;
+            List<BaseCategoryDTO> categoriesDTO = new List<BaseCategoryDTO>();
+            foreach (var category in categories)
+            {
+                categoriesDTO.Add(new()
+                {
+                    Name = category.Name
+                });
+            }
+
+            return categoriesDTO;
         }
 
         public BaseCategoryDTO CreateCategory(CreateCategoryDTO categoryDTO)
@@ -61,33 +81,59 @@ namespace ourinv.WebAPI.Services
             };
         }
 
-        public BaseCategoryDTO GetCategoryWithProduct(BaseCategoryDTO categoryDTO)
+        public BaseCategoryDTO GetCategoryWithProducts(BaseCategoryDTO categoryDTO)
         {
-            var categoryWithProducts = GetCategoryWithProductsByName(categoryDTO.Name);
-            BaseCategoryDTO categoryMapper = new();
-            var productsMapped = new List<BaseProductDTO>();
+            var category = GetCategoryWithProductsByName(categoryDTO.Name);
 
-            foreach (var product in categoryWithProducts.Products)
+            return new()
             {
-                productsMapped.Add(new()
+                Name = category.Name,
+                Products = ConvertProductToDto(category.Products)
+            };
+        }
+
+        public IEnumerable<BaseCategoryDTO> GetCategoriesWithProducts()
+        {
+            var categories = _context.Categories;
+
+            var categoryDTOs = new List<BaseCategoryDTO>();
+            foreach (var category in categories)
+            {
+                var rawCategory = GetCategoryWithProductsByName(category.Name);
+                BaseCategoryDTO categoryMapped = new()
+                {
+                    Name = rawCategory.Name
+                };
+
+                var productsMapped = rawCategory.Products != null ? ConvertProductToDto(category.Products) : null;
+                categoryMapped.Products = productsMapped;
+
+                categoryDTOs.Add(categoryMapped);
+            }
+
+            return categoryDTOs;
+        }
+
+        private static IEnumerable<BaseProductDTO> ConvertProductToDto(IEnumerable<Product> products)
+        {
+            var categoryProductsDTO = new List<BaseProductDTO>();
+
+            foreach (var product in products)
+            {
+                categoryProductsDTO.Add(new()
                 {
                     Name = product.Name,
                     Quantity = product.Quantity
                 });
             }
 
-            categoryMapper.Products = productsMapped;
-
-            return categoryMapper;
+            return categoryProductsDTO;
         }
 
         #region Helpers
         public Category GetCategoryByName(string categoryName)
         {
-            if (string.IsNullOrEmpty(categoryName))
-            {
-                throw new Exception($"The category is empty!");
-            }
+            categoryValidationException(categoryName);
 
             var existingCategory = _context.Categories.SingleOrDefault(x => x.Name == categoryName);
             if (existingCategory is null)
@@ -100,10 +146,7 @@ namespace ourinv.WebAPI.Services
 
         public Category GetCategoryWithProductsByName(string categoryName)
         {
-            if (string.IsNullOrEmpty(categoryName))
-            {
-                throw new Exception($"The category is empty!");
-            }
+            categoryValidationException(categoryName);
 
             var existingCategoryWithProducts = _context.Categories.Include(x => x.Products).SingleOrDefault(x => x.Name == categoryName);
             if (existingCategoryWithProducts is null)
@@ -116,12 +159,17 @@ namespace ourinv.WebAPI.Services
 
         public bool CheckCategoryExistence(string categoryName)
         {
+            categoryValidationException(categoryName);
+
+            return _context.Categories.Any(x => x.Name == categoryName);
+        }
+
+        private void categoryValidationException(string categoryName)
+        {
             if (string.IsNullOrEmpty(categoryName))
             {
                 throw new Exception($"The category is empty!");
             }
-
-            return _context.Categories.Any(x => x.Name == categoryName);
         }
         #endregion
     }
