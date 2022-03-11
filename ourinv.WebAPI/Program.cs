@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using ourinv.WebAPI.Database;
+using ourinv.WebAPI.Database.Repository;
 using ourinv.WebAPI.Services;
 using System.Reflection;
 
@@ -14,6 +15,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(op => op.UseInMemoryDatabase("teste"));
 builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 builder.Services.AddTransient<CategoryService>();
+builder.Services.AddTransient<ProductService>();
+builder.Services.AddTransient<ProductRepository>();
 
 var app = builder.Build();
 

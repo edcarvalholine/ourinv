@@ -5,6 +5,7 @@ using ourinv.WebAPI.Database;
 using ourinv.WebAPI.DTOs.CategoryDTO;
 using ourinv.WebAPI.DTOs.ProductDTO;
 using ourinv.WebAPI.Models;
+using ourinv.WebAPI.Services;
 
 namespace ourinv.WebAPI.Controllers
 {
@@ -12,101 +13,36 @@ namespace ourinv.WebAPI.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        public ProductController(AppDbContext context)
+        private readonly ProductService _productService;
+        public ProductController(ProductService productService)
         {
-            _context = context;
+            _productService = productService;
         }
 
         [HttpGet("{productName}")]
         public IActionResult GetProduct(string productName)
         {
-            var existingProduct = getProductByName(productName);
-
-            return Ok(convertToDTO(existingProduct));
+            return Ok(_productService.GetProduct(productName));
         }
 
-        [HttpGet("Category/{categoryName}")]
-        public IActionResult GetProductsFromCategory(string categoryName)
+        [HttpDelete("{productName}")]
+        public IActionResult DeleteProduct(string productName)
         {
-            var existingProductWithCategories = getProductsFromCategoryName(categoryName);
+            return Ok(_productService.DeleteProduct(productName));
+        }
 
-            return Ok(existingProductWithCategories);
+        [HttpPut("{productName}")]
+        public IActionResult UpdateProduct(string productName, UpdateProductDTO product)
+        {
+            return Ok(_productService.UpdateProduct(productName, product));
         }
 
         [HttpPost]
-        public IActionResult CreateProdct(string? categoryName, string productName, int productQuantity)
+        public IActionResult CreateProduct(CreateProductDTO product)
         {
-            if (categoryName == null)
-            {
-                categoryName = "Unknown";
-            }
-
-            var productCategory = _context.Categories.SingleOrDefault(x => x.Name == categoryName);
-            var existingProduct = _context.Products.Include(x => x.Category).SingleOrDefault(x => x.Name == productName);
-            if (existingProduct != null)
-            {
-                throw new Exception($"The product with name {productName} already exists in category {categoryName}!");
-            }
-
-            Product newProduct = new()
-            {
-                Name = productName,
-                Quantity = productQuantity,
-                Category = productCategory
-            };
-
-            _context.Products.Add(newProduct);
-            _context.SaveChanges();
+            var newProduct = _productService.CreateProduct(product);
 
             return CreatedAtAction(nameof(GetProduct), new { productName = newProduct.Name }, newProduct);
-        }
-
-        private BaseProductDTO convertToDTO(Product product)
-        {
-            return new()
-            {
-                Name = product.Name,
-                Quantity = product.Quantity,
-                Category = new()
-                {
-                    Name = product.Category.Name
-                }
-            };
-        }
-
-        private Product getProductByName(string productName)
-        {
-            var existingProduct = _context.Products.Where(x => x.Name == productName).Include(x => x.Category).SingleOrDefault();
-
-            if (existingProduct == null)
-            {
-                throw new Exception($"The product with name {productName} doesn't exist!");
-            }
-
-            return existingProduct;
-        }
-
-        private BaseCategoryDTO getProductsFromCategoryName(string categoryName)
-        {
-            var existingCategory = _context.Categories.Include(x => x.Products).Where(x => x.Name == categoryName).SingleOrDefault();
-            if (existingCategory == null)
-            {
-                throw new Exception($"The categoryName with name {categoryName} doesn't exist!");
-            }
-
-
-            List<BaseProductDTO> formattedProducts = new();
-            foreach (var product in existingCategory.Products)
-            {
-                formattedProducts.Add(new() {  Name = product.Name, Quantity = product.Quantity });
-            }
-
-            return new()
-            {
-                Name = existingCategory.Name,
-                Products = formattedProducts 
-            };
         }
     }
 }
