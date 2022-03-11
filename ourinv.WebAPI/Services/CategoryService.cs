@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using ourinv.WebAPI.Database;
 using ourinv.WebAPI.DTOs.CategoryDTO;
-using ourinv.WebAPI.DTOs.ProductDTO;
 using ourinv.WebAPI.Models;
 
 namespace ourinv.WebAPI.Services
@@ -9,63 +9,46 @@ namespace ourinv.WebAPI.Services
     public class CategoryService
     {
         private readonly AppDbContext _context;
-        public CategoryService(AppDbContext context)
+        private readonly IMapper _mapper;
+        public CategoryService(AppDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         public BaseCategoryDTO GetCategory(string categoryName)
         {
             var category = GetCategoryByName(categoryName);
 
-            return new()
-            {
-                Name = category.Name,
-            };
+            return _mapper.Map<BaseCategoryDTO>(category);
         }
 
         public IEnumerable<BaseCategoryDTO> GetAllCategories()
         {
             var categories = _context.Categories;
-            List<BaseCategoryDTO> categoriesDTO = new List<BaseCategoryDTO>();
-            foreach (var category in categories)
-            {
-                categoriesDTO.Add(new()
-                {
-                    Name = category.Name
-                });
-            }
 
-            return categoriesDTO;
+            return _mapper.Map<IEnumerable<BaseCategoryDTO>>(categories);
         }
 
         public BaseCategoryDTO CreateCategory(CreateCategoryDTO categoryDTO)
         {
-            Category newCategory = new()
-            {
-                Name = categoryDTO.CategoryName,
-            };
+            var newCategory = _mapper.Map<Category>(categoryDTO);
 
             _context.Categories.Add(newCategory);
             _context.SaveChanges();
 
-            return new()
-            {
-                Name = newCategory.Name,
-            };
+            return _mapper.Map<BaseCategoryDTO>(newCategory);
         }
 
         public BaseCategoryDTO UpdateCategory(CreateCategoryDTO categoryDTO, UpdateCategoryDTO newCategoryDTO)
         {
             var categoryToBeUpdated = GetCategoryByName(categoryDTO.CategoryName);
-            categoryToBeUpdated.Name = newCategoryDTO.NewCategoryName;
+
+            _mapper.Map(newCategoryDTO, categoryToBeUpdated);
 
             _context.SaveChanges();
 
-            return new()
-            {
-                Name = categoryToBeUpdated.Name
-            };
+            return _mapper.Map<BaseCategoryDTO>(categoryToBeUpdated);
         }
 
         public BaseCategoryDTO DeleteCategory(BaseCategoryDTO categoryDTO)
@@ -75,59 +58,21 @@ namespace ourinv.WebAPI.Services
             _context.Categories.Remove(categoryToDelete);
             _context.SaveChanges();
 
-            return new()
-            {
-                Name = categoryToDelete.Name,
-            };
+            return _mapper.Map<BaseCategoryDTO>(categoryToDelete);
         }
 
         public BaseCategoryDTO GetCategoryWithProducts(BaseCategoryDTO categoryDTO)
         {
             var category = GetCategoryWithProductsByName(categoryDTO.Name);
 
-            return new()
-            {
-                Name = category.Name,
-                Products = ConvertProductToDto(category.Products)
-            };
+            return _mapper.Map<BaseCategoryDTO>(category);
         }
 
         public IEnumerable<BaseCategoryDTO> GetCategoriesWithProducts()
         {
-            var categories = _context.Categories;
+            var categories = _context.Categories.Include(x => x.Products);
 
-            var categoryDTOs = new List<BaseCategoryDTO>();
-            foreach (var category in categories)
-            {
-                var rawCategory = GetCategoryWithProductsByName(category.Name);
-                BaseCategoryDTO categoryMapped = new()
-                {
-                    Name = rawCategory.Name
-                };
-
-                var productsMapped = rawCategory.Products != null ? ConvertProductToDto(category.Products) : null;
-                categoryMapped.Products = productsMapped;
-
-                categoryDTOs.Add(categoryMapped);
-            }
-
-            return categoryDTOs;
-        }
-
-        private static IEnumerable<BaseProductDTO> ConvertProductToDto(IEnumerable<Product> products)
-        {
-            var categoryProductsDTO = new List<BaseProductDTO>();
-
-            foreach (var product in products)
-            {
-                categoryProductsDTO.Add(new()
-                {
-                    Name = product.Name,
-                    Quantity = product.Quantity
-                });
-            }
-
-            return categoryProductsDTO;
+            return _mapper.Map<IEnumerable<BaseCategoryDTO>>(categories);
         }
 
         #region Helpers

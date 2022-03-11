@@ -1,5 +1,7 @@
-﻿using FluentAssertions;
+﻿using AutoMapper;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using ourinv.WebAPI;
 using ourinv.WebAPI.Database;
 using ourinv.WebAPI.DTOs.CategoryDTO;
 using ourinv.WebAPI.DTOs.ProductDTO;
@@ -14,10 +16,18 @@ namespace xUnitTest.ServiceTest
 {
     public class CategoryService_Test
     {
+        private static IMapper _mapper;
         private CategoryService _categoryService;
         public CategoryService_Test()
         {
-            _categoryService = new(configContext());
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile<CategoryProfile>();
+            });
+            _mapper = config.CreateMapper();
+
+            
+            _categoryService = new(configContext(), _mapper);
         }
 
         [Fact]
@@ -32,7 +42,7 @@ namespace xUnitTest.ServiceTest
             using var context = configContext();
             context.Categories.Add(newCategory);
             context.SaveChanges();
-            _categoryService = new(context);
+            _categoryService = new(context, _mapper);
 
             // Assert
             BaseCategoryDTO result = _categoryService.GetCategory(newCategory.Name);
@@ -53,7 +63,7 @@ namespace xUnitTest.ServiceTest
             using var context = configContext();
             context.Categories.AddRange(cateogryEntities);
             context.SaveChanges();
-            _categoryService = new(context);
+            _categoryService = new(context, _mapper);
 
             // Assert
             Assert.Equal(cateogryEntities.Count, _categoryService.GetAllCategories().ToList().Count);
@@ -62,7 +72,7 @@ namespace xUnitTest.ServiceTest
         [Fact]
         public BaseCategoryDTO CreateCategory()
         {
-            _categoryService = new(configContext());
+            _categoryService = new(configContext(), _mapper);
 
             // Arrange
             CreateCategoryDTO newCategory = new()
@@ -88,7 +98,7 @@ namespace xUnitTest.ServiceTest
             context.Categories.Add(newCategory);
             context.SaveChanges();
 
-            _categoryService = new(context);
+            _categoryService = new(context, _mapper);
             // Act
             var result = _categoryService.DeleteCategory(new() { Name = newCategory.Name });
             var categoryExists = _categoryService.CheckCategoryExistence(newCategory.Name);
@@ -108,7 +118,7 @@ namespace xUnitTest.ServiceTest
             var context = configContext();
             context.Categories.Add(newCategory);
             context.SaveChanges();
-            _categoryService = new(context);
+            _categoryService = new(context, _mapper);
 
             var categoryUpdated = new UpdateCategoryDTO() { NewCategoryName = "Teste 2" };
 
@@ -123,7 +133,7 @@ namespace xUnitTest.ServiceTest
         public void GetCategoryByName_Throws()
         {
             // Arrange
-            _categoryService = new(configContext());
+            _categoryService = new(configContext(), _mapper);
 
             // Act
             Action act = () => _categoryService.GetCategoryByName("Teste");
@@ -151,7 +161,7 @@ namespace xUnitTest.ServiceTest
             context.Products.AddRange(newProducts);
             context.SaveChanges();
 
-            _categoryService = new(context);
+            _categoryService = new(context, _mapper);
 
             var expectedResult = new BaseCategoryDTO()
             {
@@ -194,7 +204,7 @@ namespace xUnitTest.ServiceTest
             context.Products.AddRange(newProducts);
             context.SaveChanges();
 
-            _categoryService = new(context);
+            _categoryService = new(context, _mapper);
 
             List<BaseCategoryDTO> expectedCategories = new()
             {
@@ -259,7 +269,7 @@ namespace xUnitTest.ServiceTest
         [Fact]
         public void CheckCategoryExistence_False()
         {
-            _categoryService = new(configContext());
+            _categoryService = new(configContext(), _mapper);
 
             // Act
             var categoryExists = _categoryService.CheckCategoryExistence("don't exist");

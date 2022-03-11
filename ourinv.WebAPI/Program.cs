@@ -1,5 +1,8 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using ourinv.WebAPI.Database;
+using ourinv.WebAPI.Services;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +12,8 @@ builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(op => op.UseInMemoryDatabase("teste"));
+builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
+builder.Services.AddTransient<CategoryService>();
 
 var app = builder.Build();
 

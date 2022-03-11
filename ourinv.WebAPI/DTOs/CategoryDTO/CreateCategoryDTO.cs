@@ -1,4 +1,6 @@
-﻿namespace ourinv.WebAPI.DTOs.CategoryDTO
+﻿using AutoMapper.Configuration.Annotations;
+
+namespace ourinv.WebAPI.DTOs.CategoryDTO
 {
     public class CreateCategoryDTO
     {

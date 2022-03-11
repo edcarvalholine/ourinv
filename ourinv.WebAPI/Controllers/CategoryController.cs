@@ -11,10 +11,10 @@ namespace ourinv.WebAPI.Controllers
     {
         private readonly AppDbContext _context;
         private readonly CategoryService _categoryService;
-        public CategoryController(AppDbContext context)
+        public CategoryController(AppDbContext context, CategoryService categoryService)
         {
             _context = context;
-            _categoryService = new CategoryService(context);
+            _categoryService = categoryService;
         }
 
         [HttpGet("{categoryName}")]
@@ -23,6 +23,14 @@ namespace ourinv.WebAPI.Controllers
             var existingCategory = _categoryService.GetCategory(categoryName);
 
             return Ok(existingCategory);
+        }
+
+        [HttpGet]
+        public IActionResult GetAllCategories()
+        {
+            var existingCategories = _categoryService.GetAllCategories();
+
+            return Ok(existingCategories);
         }
 
         [HttpPost]
